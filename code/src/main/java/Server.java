@@ -3,30 +3,23 @@ import java.io.*;
 
 public class Server implements Runnable {
 
-    private final ServerSocket serverSocket;
-    private Socket socket;
-    private DataInputStream is;
-    private String name;
-    private enum states {IDLE, CONNECTED, RUNNING, CLOSED}
+    private final DatagramSocket serverSocket;
+    private final InetAddress address;
+    private final int port;
+    private enum states {IDLE, RUNNING, CLOSED}
     private states state;
+    private byte[] buf = new byte[512];
 
     public Server(int port) throws IOException {
-        this.serverSocket = new ServerSocket(port);
-        System.out.println("Server Running at port "+port);
+        this.serverSocket = new DatagramSocket(port);
+        this.address = InetAddress.getByName("localhost");
+        this.port = port;
+        System.out.println("Server Created at port "+port);
         this.state = states.IDLE;
     }
 
-    public void connect() throws IOException {
-        this.socket = this.serverSocket.accept();
-        this.is = new DataInputStream(this.socket.getInputStream());
-        this.state = states.CONNECTED;
-        System.out.println("Server Connected");
-    }
-
     private void close() throws IOException {
-        this.socket.close();
         this.serverSocket.close();
-        this.is.close();
         this.state = states.CLOSED;
         System.out.println("Server Closed");
     }
@@ -36,21 +29,21 @@ public class Server implements Runnable {
         this.state = states.RUNNING;
         String line = "";
         while (!line.equals("exit")) {
+            DatagramPacket packet
+                    = new DatagramPacket(buf, buf.length);
             try {
-                try {
-                    line = is.readUTF();
-                } catch (EOFException e) {
-                    break;
-                }
-
-                System.out.println("Server Received: " + line);
-                System.out.println("__________________");
+                this.serverSocket.receive(packet);
             } catch (IOException e) {
-                System.out.println("ERR");
                 System.out.println(e.getMessage());
-                e.printStackTrace();
-                break;
             }
+
+            InetAddress address = packet.getAddress();
+            int port = packet.getPort();
+
+            packet = new DatagramPacket(buf, buf.length, address, port);
+            line = new String(packet.getData(), 0, packet.getLength()).trim();
+
+            System.out.println("Server Received: "+line);
         }
 
         try {

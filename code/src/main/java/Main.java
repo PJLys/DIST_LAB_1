@@ -2,10 +2,8 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        Server s = new Server(5000);
-        Client c = new Client("127.0.0.1", 5000);
-
-        s.connect();
+        Server s = new Server(4096);
+        Client c = new Client(2048);
 
         Thread serverThread = new Thread(s);
         Thread clientThread = new Thread(c);
