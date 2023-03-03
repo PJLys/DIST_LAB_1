@@ -35,7 +35,10 @@ public class Client implements Runnable {
                 byte[] buf = line.getBytes(StandardCharsets.UTF_8);
                 DatagramPacket packet = new DatagramPacket(buf, buf.length, this.address, 4096);
                 socket.send(packet);
-                System.out.println("Client sent: "+ packet);
+                if (!line.equals("")) {
+                    System.out.println("Client sent: "+ line);
+                }
+
             } catch (IOException e) {
                 e.printStackTrace();
             }

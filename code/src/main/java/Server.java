@@ -1,5 +1,6 @@
 import java.net.*;
 import java.io.*;
+import java.util.Arrays;
 
 public class Server implements Runnable {
 
@@ -29,8 +30,10 @@ public class Server implements Runnable {
         this.state = states.RUNNING;
         String line = "";
         while (!line.equals("exit")) {
+            System.out.println("-----------------");
+
             DatagramPacket packet
-                    = new DatagramPacket(buf, buf.length);
+                    = new DatagramPacket(this.buf, this.buf.length);
             try {
                 this.serverSocket.receive(packet);
             } catch (IOException e) {
@@ -40,10 +43,18 @@ public class Server implements Runnable {
             InetAddress address = packet.getAddress();
             int port = packet.getPort();
 
-            packet = new DatagramPacket(buf, buf.length, address, port);
+            packet = new DatagramPacket(this.buf, this.buf.length, address, port);
             line = new String(packet.getData(), 0, packet.getLength()).trim();
 
-            System.out.println("Server Received: "+line);
+            Arrays.fill(buf, (byte) 0);
+
+            if (line.equals("")) {
+                System.out.println("Server state");
+                System.out.println("\t"+this.state);
+                System.out.println("Server Address");
+                System.out.println("\t"+this.address.getHostAddress());
+            } else
+                System.out.println("Server Received: "+line);
         }
 
         try {
