@@ -11,13 +11,16 @@ public class Client implements Runnable {
     private InetAddress address;
     private int port;
 
-    public Client(int port) {
+    private String clientName;
+
+    public Client(int port, String clientName) {
         try {
             this.address = InetAddress.getByName("localhost");
             this.port = port;
             this.socket = new DatagramSocket(port);
+            this.clientName = clientName;
 
-            System.out.println("Client Created!");
+            System.out.println(this.clientName + " Created");
 
             this.reader = new BufferedReader(new InputStreamReader(System.in));
             this.name = "UDP Client";
@@ -31,18 +34,18 @@ public class Client implements Runnable {
         String line = this.name;
         while (!line.equals("exit")) {
             try {
-                line = this.reader.readLine();
+                line = "Test message from " + this.clientName;
                 byte[] buf = line.getBytes(StandardCharsets.UTF_8);
                 DatagramPacket packet = new DatagramPacket(buf, buf.length, this.address, 4096);
                 socket.send(packet);
-                if (!line.equals("")) {
-                    System.out.println("Client sent: "+ line);
-                }
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
         System.out.println("Closing Client");
 
