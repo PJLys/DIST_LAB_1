@@ -45,7 +45,6 @@ public class Server implements Runnable {
         while (this.state != states.CLOSED) {
             try {
                 this.checkForClients();
-                // wait for 5 seconds before checking for new clients again
             } catch (SocketTimeoutException e) {
                 // this exception is thrown when the accept() method times out
                 // it's safe to ignore it and continue the loop
@@ -55,11 +54,5 @@ public class Server implements Runnable {
             }
         }
         System.out.println("Server Closed");
-    }
-
-    public static void main(String[] args) throws IOException {
-        Server server = new Server(12345);
-        Thread serverThread = new Thread(server);
-        serverThread.start();
     }
 }

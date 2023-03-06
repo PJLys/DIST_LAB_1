@@ -15,8 +15,6 @@ public class Client2 implements Runnable {
             this.name = s;
             this.address = InetAddress.getLocalHost();
             this.port = port;
-            this.socket = new Socket(this.address, port);
-            this.os = new DataOutputStream(socket.getOutputStream());
             System.out.println("Client2 Created");
         } catch (IOException e) {
             System.out.println("Failed Creating Client 2: ");
@@ -25,9 +23,17 @@ public class Client2 implements Runnable {
     }
 
     public void run() {
+        try {
+            this.socket = new Socket(this.address.getHostAddress(), port);
+            this.os = new DataOutputStream(this.socket.getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         System.out.println(this.name+" Running");
         while (true) {
             try {
+                System.out.println(this.os);
                 this.os.writeUTF("Hello from " + this.name + "!");
                 this.os.flush();
             } catch (IOException e) {

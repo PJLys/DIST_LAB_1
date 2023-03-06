@@ -26,7 +26,7 @@ public class Client implements Runnable {
 
     public void run() {
         try {
-            this.socket = new Socket(this.address, port);
+            this.socket = new Socket(this.address.getHostAddress(), port);
             this.os = new DataOutputStream(this.socket.getOutputStream());
         } catch (IOException e) {
             e.printStackTrace();
