@@ -1,68 +1,65 @@
 import java.net.*;
 import java.io.*;
-import java.util.Arrays;
+import java.util.ArrayList;
 
 public class Server implements Runnable {
 
-    private final DatagramSocket serverSocket;
+    private final ServerSocket serverSocket;
+    private Thread connectionThread;
     private final InetAddress address;
-    private final int port;
     private enum states {IDLE, RUNNING, CLOSED}
     private states state;
-    private byte[] buf = new byte[512];
+    private ArrayList<Socket> clients;
 
     public Server(int port) throws IOException {
-        this.serverSocket = new DatagramSocket(port);
+        this.serverSocket = new ServerSocket(port,0,InetAddress.getLocalHost());
+        this.serverSocket.setReuseAddress(true);
         this.address = InetAddress.getByName("localhost");
-        this.port = port;
         System.out.println("Server Created at port "+port);
         this.state = states.IDLE;
     }
 
-    private void close() throws IOException {
-        this.serverSocket.close();
-        this.state = states.CLOSED;
-        System.out.println("Server Closed");
+    public void checkForClients() throws IOException {
+        Socket clientSocket = serverSocket.accept();
+        DataInputStream is = new DataInputStream(clientSocket.getInputStream());
+        System.out.println("New client added!");
+        new Thread(() -> {
+            String line = "";
+            System.out.println("__________________");
+            while (true) {
+                try {
+                    line = is.readUTF();
+                    System.out.println("Server Received: " + line);
+                    System.out.println("__________________");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    break;
+                }
+            }
+        }).start();
     }
 
     public void run() {
         System.out.println("Server Running");
         this.state = states.RUNNING;
-        String line = "";
-        while (!line.equals("exit")) {
-            System.out.println("-----------------");
-
-            DatagramPacket packet
-                    = new DatagramPacket(this.buf, this.buf.length);
+        while (this.state != states.CLOSED) {
             try {
-                this.serverSocket.receive(packet);
-            } catch (IOException e) {
+                this.checkForClients();
+                // wait for 5 seconds before checking for new clients again
+            } catch (SocketTimeoutException e) {
+                // this exception is thrown when the accept() method times out
+                // it's safe to ignore it and continue the loop
+            } catch (Exception e) {
                 System.out.println(e.getMessage());
+                break;
             }
-
-            InetAddress address = packet.getAddress();
-            int port = packet.getPort();
-
-            packet = new DatagramPacket(this.buf, this.buf.length, address, port);
-            line = new String(packet.getData(), 0, packet.getLength()).trim();
-
-            Arrays.fill(buf, (byte) 0);
-
-            if (line.equals("")) {
-                System.out.println("Server state");
-                System.out.println("\t"+this.state);
-                System.out.println("Server Address");
-                System.out.println("\t"+this.address.getHostAddress());
-            } else
-                System.out.println("Server Received: "+line);
         }
+        System.out.println("Server Closed");
+    }
 
-        try {
-            System.out.println("Closing server");
-            this.close();
-        } catch (IOException e) {
-            System.out.println("ERR");
-            System.out.println(e.getMessage());
-        }
+    public static void main(String[] args) throws IOException {
+        Server server = new Server(12345);
+        Thread serverThread = new Thread(server);
+        serverThread.start();
     }
 }
